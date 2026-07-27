@@ -2141,16 +2141,15 @@ function build_2d_graphs(param1, lambda0, w0, theta_fixed, pols, shift_type, lay
             % === СОХРАНЕНИЕ РЕЗУЛЬТАТОВ ДЛЯ ВСЕХ ПОЛЯРИЗАЦИЙ ===
             for j = 1:N_pols
                 shift_value = get_shift_value(shifts, pols{j}, shift_type);
-                if isfinite(shift_value)
-                               % Нормируем пространственные сдвиги на длину волны (тип 1 и 2)
-            if shift_type == 1 || shift_type == 2
-                results(j, i) = double(real(shift_value)) / lambda0;
-            else
-                results(j, i) = double(real(shift_value));
-            end
-                else
-                   results(j, i) = NaN;
+                if ~isfinite(shift_value)
+                    shift_value = 0;
                 end
+                            % Нормируем пространственные сдвиги на длину волны (тип 1 и 2)
+            if shift_type == 1 || shift_type == 2
+                results(j, i) = double(shift_value) / lambda0;
+            else
+                results(j, i) = double(shift_value);
+            end
             end
         end
     else
@@ -2179,16 +2178,15 @@ function build_2d_graphs(param1, lambda0, w0, theta_fixed, pols, shift_type, lay
             
             for j = 1:N_pols
                 shift_value = get_shift_value(shifts, pols{j}, shift_type);
-                if isfinite(shift_value)
-                                % Нормируем пространственные сдвиги на длину волны (тип 1 и 2)
-            if shift_type == 1 || shift_type == 2
-                results(j, i) = double(real(shift_value)) / lambda0;
-            else
-                results(j, i) = double(real(shift_value));
-            end
-                else
-                    results(j, i) = NaN;
+                if ~isfinite(shift_value)
+                    shift_value = 0;
                 end
+                            % Нормируем пространственные сдвиги на длину волны (тип 1 и 2)
+            if shift_type == 1 || shift_type == 2
+                results(j, i) = double(shift_value) / lambda0;
+            else
+                results(j, i) = double(shift_value);
+            end
             end
         end
     end
@@ -2200,19 +2198,9 @@ function build_2d_graphs(param1, lambda0, w0, theta_fixed, pols, shift_type, lay
     colors = lines(N_pols);
     hold on;
     for j = 1:N_pols
-       if any(isfinite(results(j, :)))
-            valid_data = true;
-            plot(param1.range, results(j, :), 'Color', colors(j,:), 'LineWidth', 2, ...
+        plot(param1.range, results(j, :), 'Color', colors(j,:), 'LineWidth', 2, ...
             'DisplayName', sprintf('%s поляризация', pols{j}));
-       end
     end
-
-    if ~valid_data
-        warning('Нет полезных данных для построения графика! Проверьте параметры.');
-        text(0.5, 0.5, 'Нет данных для отображения', 'HorizontalAlignment', 'center', ...
-            'FontSize', 14, 'Color', 'red');
-    end
-
     hold off;
     grid on;
     xlabel(sprintf('%s (%s)', param1.full_name, param1.unit), 'FontSize', 12);
@@ -2279,17 +2267,13 @@ function build_3d_graphs(param1, param2, lambda0, w0, theta_fixed, pols, shift_t
                     end
                     
                     shifts = calculate_shifts_at_point(curr_layers, curr_lambda, curr_w0, curr_theta, n_angle_points);
-                    shift_val = get_shift_value(shifts, pols{k}, shift_type);
-                    if isfinite(shift_val)
-                                   % Нормировка пространственных сдвигов на длину волны (в метрах)
+                              shift_val = get_shift_value(shifts, pols{k}, shift_type);
+           % Нормировка пространственных сдвигов на длину волны (в метрах)
            if shift_type == 1 || shift_type == 2
-               Z(j, i) = real(shift_val / lambda0);
+               Z(j, i) = shift_val / lambda0;
            else
-               Z(j, i) = real(shift_val);
+               Z(j, i) = shift_val;
            end
-                    else
-                        Z(j, i) = NaN;
-                    end
                 end
             end
         else
@@ -2326,17 +2310,13 @@ function build_3d_graphs(param1, param2, lambda0, w0, theta_fixed, pols, shift_t
                     end
                     
                     shifts = calculate_shifts_at_point(curr_layers, curr_lambda, curr_w0, curr_theta, n_angle_points);
-                    shift_val = get_shift_value(shifts, pols{k}, shift_type);
-                    if isfinite(shift_val)
-                                   % Нормировка пространственных сдвигов на длину волны (в метрах)
+                               shift_val = get_shift_value(shifts, pols{k}, shift_type);
+           % Нормировка пространственных сдвигов на длину волны (в метрах)
            if shift_type == 1 || shift_type == 2
-               Z(j, i) = real(shift_val / lambda0);
+               Z(j, i) = shift_val / lambda0;
            else
-               Z(j, i) = real(shift_val);
+               Z(j, i) = shift_val;
            end
-                    else
-                        Z(j, i) = NaN;
-                    end
                 end
             end
         end
@@ -2344,19 +2324,6 @@ function build_3d_graphs(param1, param2, lambda0, w0, theta_fixed, pols, shift_t
         % === ПОСТРОЕНИЕ ГРАФИКОВ ===
         figure('Name', sprintf('3D: %s vs %s (%s)', param1.full_name, param2.full_name, shift_names{shift_type}), ...
             'Position', [50, 50, 1600, 900], 'Color', 'w');
-    if all(isnan(Z(:))) || (max(Z(:)) - min(Z(:))) < eps
-        subplot(1, 2, 1);
-        text(0.5, 0.5, 'Нет данных для отображения', 'HorizontalAlignment', 'center', ...
-            'FontSize', 14, 'Color', 'red');
-        title(sprintf('3D поверхность (%s, %s)', pols{k}, shift_names{shift_type}));
-        
-        subplot(1, 2, 2);
-        text(0.5, 0.5, 'Нет данных для отображения', 'HorizontalAlignment', 'center', ...
-            'FontSize', 14, 'Color', 'red');
-        title(sprintf('Контурный график (%s, %s)', pols{k}, shift_names{shift_type}));
-        
-        warning('3D график: все данные NaN или константа! Проверьте параметры.');
-    else
         subplot(1, 2, 1);
         surf(X, Y, Z, 'EdgeColor', 'none');
         colormap jet;
@@ -2367,7 +2334,6 @@ function build_3d_graphs(param1, param2, lambda0, w0, theta_fixed, pols, shift_t
         title(sprintf('3D поверхность (%s, %s)', pols{k}, shift_names{shift_type}));
         view(45, 30);
         axis tight;
-        
         subplot(1, 2, 2);
         contourf(X, Y, Z, 40);
         cb = colorbar;
@@ -2378,8 +2344,6 @@ function build_3d_graphs(param1, param2, lambda0, w0, theta_fixed, pols, shift_t
         axis equal;
         axis tight;
     end
- end
-
     
     if use_parfor
         fprintf('3D график построен (параллельный режим, тип сдвига %d)\n', shift_type);
@@ -2627,17 +2591,6 @@ function shifts = calculate_shifts_at_point(layers, lambda0, w0, theta, n_angle_
         W_p_fixed = interp1(theta_range_deg, W_p, theta_deg_target, 'linear', 'extrap');
         S3_fixed = interp1(theta_range_deg, S3, theta_deg_target, 'linear', 'extrap');
         
-        % Замена комплексных значений на вещественные 
-        dPhi_s_fixed = real(dPhi_s_fixed);
-        dPhi_p_fixed = real(dPhi_p_fixed);
-        dDelta_Phi_fixed = real(dDelta_Phi_fixed);
-        dlnAmp_s_fixed = real(dlnAmp_s_fixed);
-        dlnAmp_p_fixed = real(dlnAmp_p_fixed);
-        dAmp_diff_fixed = real(dAmp_diff_fixed);
-        W_s_fixed = real(W_s_fixed);
-        W_p_fixed = real(W_p_fixed);
-        S3_fixed = real(S3_fixed);
-
         % ==================================================================
         % 9. СДВИГИ ДЛЯ S И P ПОЛЯРИЗАЦИЙ (базовые)
         % ==================================================================
@@ -2692,17 +2645,6 @@ function shifts = calculate_shifts_at_point(layers, lambda0, w0, theta, n_angle_
             shifts.IF_lcp_angular = 0;
         end
         
-        field_names = fieldnames(shifts);
-        for i = 1:length(field_names)
-            fld = field_names{i};
-            val = getfield(shifts, fld);
-            if isfinite(val)
-                setfield(shifts, fld, real(val));
-            else
-                setfield(shifts, fld, 0);
-            end
-        end
-
     catch ME
         fprintf('WARNING в calculate_shifts_at_point: %s\n', ME.message);
         shifts = create_zero_shifts();
@@ -2776,24 +2718,21 @@ function value = get_shift_value(shifts, pol, shift_type)
             else, value = 0;
             end
         case 'RCP'
-            if shift_type == 1, value = shifts.GH_rcp_spatial; 
+            if shift_type == 1
+                % === ИСПРАВЛЕНО: Прямое значение, а не среднее ===
+                value = shifts.GH_rcp_spatial; 
             elseif shift_type == 2, value = shifts.IF_rcp_spatial;
             elseif shift_type == 3, value = shifts.GH_rcp_angular * 1e6;
             else, value = shifts.IF_rcp_angular * 1e6;
             end
         case 'LCP'
-            if shift_type == 1, value = shifts.GH_lcp_spatial;
+            if shift_type == 1
+                % === ИСПРАВЛЕНО: Прямое значение, а не среднее ===
+                value = shifts.GH_lcp_spatial;
             elseif shift_type == 2, value = shifts.IF_lcp_spatial;
             elseif shift_type == 3, value = shifts.GH_lcp_angular * 1e6;
             else, value = shifts.IF_lcp_angular * 1e6;
             end
-    end
-
-        % Берем вещественную часть для конечных значений
-    if isfinite(value)
-        value = real(value);
-    else
-        value = NaN;
     end
 end
 
@@ -2810,7 +2749,7 @@ function init_parallel_pool()
         try
             pool = gcp('nocreate');  % Проверяем существующий пул
             if isempty(pool)
-                parpool('Processes', 5);  % Создаём новый если нет
+                parpool('local');  % Создаём новый если нет
             end
             pool_initialized = true;
             fprintf('Параллельный пул инициализирован\n');
@@ -2827,7 +2766,7 @@ end
 function use_parfor = check_parfor_available()
     try
         pool = gcp('nocreate');
-        use_parfor = ~isempty(pool) && pool.NumWorkers > 0;
+        use_parfor = ~isempty(pool);
     catch
         use_parfor = false;
     end
